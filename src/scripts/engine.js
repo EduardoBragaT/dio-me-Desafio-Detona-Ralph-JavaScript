@@ -10,12 +10,20 @@ const state = {
         hitPosition: 0,
         result: 0,
         currentTime: 60,
+        currentPosition: 0,
     },
     actions: {
-        timerId: setInterval(randomSquare, 1000),
+        timerId: null,
         countDownTimerId: setInterval(countDown, 1000),
     },
 };
+
+function restartInterval(action, func, timer) {
+    if (action) {
+        clearInterval(action);
+    }
+    return setInterval(func, timer);
+}
 
 function countDown() {
     state.values.currentTime--;
@@ -29,7 +37,7 @@ function countDown() {
 
 function playSound(audioName) {
     let audio = new Audio(`../../assets/audio/${audioName}.m4a`);
-    audio.volume = 0.2;
+    audio.volume = 0.05;
     audio.play();
 }
 function randomSquare() {
@@ -38,30 +46,50 @@ function randomSquare() {
             square.classList.remove("enemy");
         }
     });
-    let randomNumber = Math.floor(Math.random() * 9);
+    let randomNumber;
+    do {
+        randomNumber = Math.floor(Math.random() * 9);
+    } while (randomNumber == state.values.currentPosition);
     let randomSquareEnemy = state.view.squares[randomNumber];
     randomSquareEnemy.classList.toggle("enemy");
     state.values.hitPosition = randomSquareEnemy.id;
+    state.values.currentPosition = randomNumber;
 }
 function moveEnemy() {
-    state.values.timerId = setInterval(randomSquare, state.values.gameVelocity);
+    if (!state.actions.timerId) {
+        state.actions.timerId = setInterval(
+            randomSquare,
+            state.values.gameVelocity
+        );
+    }
 }
 
+function hitFeedBack(square) {
+    setTimeout(randomSquare, 300);
+    state.actions.timerId = restartInterval(state.actions.timerId, randomSquare, state.values.gameVelocity);
+    square.style.backgroundColor = "#FF000066";
+    setTimeout(() => { square.style.backgroundColor = "#1aeaa5"}, 200);
+}
 function addListenerHitBox() {
     state.view.squares.forEach((square) => {
         square.addEventListener("mousedown", () => {
-            if (square.id === state.values.hitPosition && !(state.values.currentTime <= 0)) {
+            if (
+                square.id === state.values.hitPosition &&
+                !(state.values.currentTime <= 0)
+            ) {
+                playSound("hit");
                 state.values.result++;
                 state.view.score.textContent = state.values.result;
                 state.values.hitPosition = null;
-                playSound("hit");
+                hitFeedBack(square);
             }
         });
     });
 }
 
 function initialize() {
-    // moveEnemy();
+    randomSquare();
+    moveEnemy();
     addListenerHitBox();
 }
 

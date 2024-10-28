@@ -48,5 +48,5 @@
     background-image: url(../../assets/image/ralph.png);
     background-size: cover;
     background-position: center;
-    transition: background 0.3s ease;
+    transition: background 0.3s ease-in-out;
 }
